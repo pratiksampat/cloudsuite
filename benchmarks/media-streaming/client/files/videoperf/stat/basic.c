@@ -63,6 +63,8 @@ extern Cmdline_Params param;
 #define NUM_BINS	(100000)
 #endif
 
+FILE *file;
+
 unsigned int *errno_errs_reported   = 0;
 unsigned int *httperf_errs_reported = 0;
 #define MAX_ERRNO           (500)
@@ -623,6 +625,11 @@ recv_start (Event_Type et, Object *obj, Any_Type reg_arg, Any_Type call_arg)
   basic.call_response_sum += resp_time;
   ++basic.num_responses;
 #endif /* UW_STABLE_STATS */
+  fprintf(file, "%f;%f\n",
+                  basic.call_response_sum / basic.num_responses,
+                  basic.reply_rate_sum / basic.num_reply_samples);
+  fflush(file);
+
   if( param.spec_stats > 0 ) {
     track_spec_response( c, resp_time );
   }
@@ -1037,6 +1044,12 @@ init (void)
   err_report_init();
   if( param.spec_stats > 0 ) {
     spec_stats_init();
+  }
+
+  file = fopen("record.log", "w");
+  if (file == NULL) {
+    perror("Error opening file");
+    return 1;
   }
 
 #ifdef UW_CALL_STATS
